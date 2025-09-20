@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NMG Notes App</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: #007BFF;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+  }
+  .container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  form input, form textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  form button {
+    padding: 0.5rem 1rem;
+    background: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  form button:hover {
+    background: #0056b3;
+  }
+  .notes {
+    margin-top: 1rem;
+  }
+  .note {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    word-wrap: break-word;
+  }
+  .note h3 {
+    margin: 0 0 0.5rem 0;
+  }
+  .note button {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-left: 5px;
+  }
+  .edit-btn {
+    background: #ffc107;
+  }
+  .delete-btn {
+    background: #dc3545;
+    color: white;
+  }
+  .message {
+    margin-top: 1rem;
+    text-align: center;
+    color: green;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Notes App</h1>
+</header>
+
+<div class="container">
+  <form id="note-form">
+    <input type="text" id="note-title" placeholder="Title" required>
+    <textarea id="note-content" rows="4" placeholder="Write your note here..." required></textarea>
+    <button type="submit">Add Note</button>
+  </form>
+  <div class="message" id="message"></div>
+  <div class="notes" id="notes-container"></div>
+</div>
+
+<script>
+  let notes = JSON.parse(localStorage.getItem('notes')) || [];
+  let editIndex = null;
+
+  const form = document.getElementById('note-form');
+  const titleInput = document.getElementById('note-title');
+  const contentInput = document.getElementById('note-content');
+  const notesContainer = document.getElementById('notes-container');
+  const messageEl = document.getElementById('message');
+
+  function showMessage(msg, color='green'){
+    messageEl.textContent = msg;
+    messageEl.style.color = color;
+    setTimeout(() => messageEl.textContent='', 2000);
+  }
+
+  function saveNotes() {
+    localStorage.setItem('notes', JSON.stringify(notes));
+    renderNotes();
+  }
+
+  function renderNotes() {
+    notesContainer.innerHTML = '';
+    if(notes.length === 0){
+      notesContainer.innerHTML = '<p>No notes yet.</p>';
+      return;
+    }
+    notes.forEach((note, index) => {
+      const noteEl = document.createElement('div');
+      noteEl.classList.add('note');
+      noteEl.innerHTML = `
+        <h3>${note.title}</h3>
+        <p>${note.content}</p>
+        <button class="edit-btn">Edit</button>
+        <button class="delete-btn">Delete</button>
+      `;
+      noteEl.querySelector('.edit-btn').addEventListener('click', () => editNote(index));
+      noteEl.querySelector('.delete-btn').addEventListener('click', () => deleteNote(index));
+      notesContainer.appendChild(noteEl);
+    });
+  }
+
+  function addNote(title, content) {
+    notes.push({title, content});
+    saveNotes();
+    showMessage('Note added successfully!');
+  }
+
+  function editNote(index) {
+    editIndex = index;
+    titleInput.value = notes[index].title;
+    contentInput.value = notes[index].content;
+    form.querySelector('button').textContent = 'Update Note';
+  }
+
+  function updateNote(title, content) {
+    if(editIndex !== null){
+      notes[editIndex] = {title, content};
+      editIndex = null;
+      saveNotes();
+      form.querySelector('button').textContent = 'Add Note';
+      showMessage('Note updated successfully!');
+    }
+  }
+
+  function deleteNote(index) {
+    if(confirm('Are you sure you want to delete this note?')){
+      notes.splice(index, 1);
+      saveNotes();
+      showMessage('Note deleted!', 'red');
+    }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+    if(title === '' || content === '') return;
+    if(editIndex === null){
+      addNote(title, content);
+    } else {
+      updateNote(title, content);
+    }
+    form.reset();
+  });
+
+  renderNotes();
+</script>
+
+</body>
+</html>
