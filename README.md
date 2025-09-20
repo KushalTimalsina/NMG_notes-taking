@@ -1,0 +1,2 @@
+# NMG_notes-taking
+
